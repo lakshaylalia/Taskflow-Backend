@@ -1,9 +1,9 @@
-import { ApiResponse } from "../utils/apiResponse";
-import { ApiError } from "../utils/apiError";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ProjectMember } from "../models/projectMember.model";
-import { Project } from "../models/projects.model";
-import { User } from "../models/user.model";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiError } from "../utils/apiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ProjectMember } from "../models/projectMember.model.js";
+import { Project } from "../models/projects.model.js";
+import { User } from "../models/user.model.js";
 
 export const getAllProjects = asyncHandler(async (req, res) => {
   const memberships = await ProjectMember.find({
@@ -15,6 +15,26 @@ export const getAllProjects = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, projects, "Projects fetched successfully"));
+});
+
+export const createProject = asyncHandler(async (req, res) => {
+  const { name, description } = req.body;
+  if (!name || !description) {
+    throw new ApiError(400, "Please provide name and description");
+  }
+  const project = await Project.create({
+    name,
+    description,
+    owner: req.user._id,
+  });
+  await ProjectMember.create({
+    projectId: project._id,
+    userId: req.user._id,
+    role: "owner",
+  });
+  return res
+    .status(201)
+    .json(new ApiResponse(201, project, "Project created successfully"));
 });
 
 export const getProjectMembers = asyncHandler(async (req, res) => {
